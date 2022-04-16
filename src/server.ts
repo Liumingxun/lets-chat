@@ -1,6 +1,7 @@
 import type { Server as HTTPServer } from 'http'
 import { createServer } from 'http'
 import path from 'path'
+import fs from 'fs'
 import type { Application } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import express from 'express'
@@ -11,7 +12,7 @@ export class Server {
   private app!: Application
   private io!: SocketIOServer
   private activeSockets: string[] = []
-  private port
+  private port: number
 
   constructor(port?: number) {
     this.port = port ?? 5000
@@ -21,12 +22,7 @@ export class Server {
   private initialize() {
     this.app = express()
     this.httpServer = createServer(this.app)
-    this.io = new SocketIO(this.httpServer, {
-      cors: {
-        origin: 'http://192.168.31.123:5000',
-        methods: ['GET', 'POST'],
-      },
-    })
+    this.io = new SocketIO(this.httpServer)
 
     this.configureApp()
     this.configureRoutes()
@@ -42,7 +38,29 @@ export class Server {
 
   // todo: 解耦
   private configureApp(): void {
+    this.app.use('/', (req, res, next) => {
+      console.log(req.baseUrl)
+      next()
+    })
+    this.app.use('/scripts/*.js', (req, res) => {
+      console.log(req.baseUrl)
+      const source = fs.readFileSync(`./public/${req.baseUrl}`, 'utf-8')
+      res.contentType('application/javascript')
+      res.end(Server.rewriteImport(source))
+    })
+    this.app.use('/@modules/*', async(req, res, next) => {
+      res.contentType('application/javascript')
+      const prefix = `../${req.baseUrl.replace('/@modules', '/node_modules')}`
+      const p = path.resolve(__dirname, `${prefix}/package.json`)
+      const { module } = await import(p)
+      res.end(Server.rewriteImport(fs.readFileSync(path.resolve(__dirname, prefix, module), 'utf-8')))
+      next()
+    })
     this.app.use(express.static(path.resolve(__dirname, '../public')))
+  }
+
+  private static rewriteImport(source) {
+    return source.replace(/(from\s+['"])(?![\.\/])/g, '$1/@modules/')
   }
 
   private handleSocketConnection() {

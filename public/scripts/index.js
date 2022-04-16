@@ -30,7 +30,6 @@ socket.on('update-user-list', (res) => {
 })
 
 const devices = navigator.mediaDevices
-console.log(devices)
 devices.getUserMedia({video: true, audio: true})
   .then((stream) => {
     const localVideo = document.getElementById('local-video')
