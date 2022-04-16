@@ -1,7 +1,5 @@
 const socket = io('localhost:5000')
 
-console.log(socket)
-
 function updateUserList(socketList) {
   const activeUserList = document.getElementById('user-list')
 

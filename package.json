@@ -2,9 +2,8 @@
   "name": "letschat",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "nodemon --watch ./src/**/*.ts --exec ts-node ./src/app.ts",
     "debug": "vite --debug",
     "build": "tsc && vite build",
     "preview": "vite preview",
@@ -21,9 +20,7 @@
     "eslint": "^8.13.0",
     "ts-node": "^10.7.0",
     "nodemon": "^2.0.15",
-    "typescript": "^4.5.4",
-    "vite": "^2.9.0",
-    "vite-plugin-node": "^0.0.19"
+    "typescript": "^4.5.4"
   },
   "dependencies": {
     "express": "^4.17.3",

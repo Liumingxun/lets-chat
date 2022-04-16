@@ -1,14 +1,10 @@
 import type { Server as HTTPServer } from 'http'
 import { createServer } from 'http'
 import path from 'path'
-import { fileURLToPath } from 'url'
 import type { Application } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import express from 'express'
 import { Server as SocketIO } from 'socket.io'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 export class Server {
   private httpServer!: HTTPServer
@@ -75,8 +71,8 @@ export class Server {
     })
   }
 
-  public listen(callback: (port: number) => void): void {
-    this.httpServer.listen(this.port, '0.0.0.0', () => callback(this.port))
+  public listen(callback?: (port: number) => void): void {
+    this.httpServer.listen(this.port, () => callback?.(this.port))
   }
 
   public getRequestListener() {
