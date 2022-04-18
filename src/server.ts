@@ -1,7 +1,6 @@
 import type { Server as HTTPServer } from 'http'
 import { createServer } from 'http'
 import path from 'path'
-import fs from 'fs'
 import type { Application } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
 import express from 'express'
@@ -39,28 +38,9 @@ export class Server {
   // todo: 解耦
   private configureApp(): void {
     this.app.use('/', (req, res, next) => {
-      console.log(req.baseUrl)
-      next()
-    })
-    this.app.use('/scripts/*.js', (req, res) => {
-      console.log(req.baseUrl)
-      const source = fs.readFileSync(`./public/${req.baseUrl}`, 'utf-8')
-      res.contentType('application/javascript')
-      res.end(Server.rewriteImport(source))
-    })
-    this.app.use('/@modules/*', async(req, res, next) => {
-      res.contentType('application/javascript')
-      const prefix = `../${req.baseUrl.replace('/@modules', '/node_modules')}`
-      const p = path.resolve(__dirname, `${prefix}/package.json`)
-      const { module } = await import(p)
-      res.end(Server.rewriteImport(fs.readFileSync(path.resolve(__dirname, prefix, module), 'utf-8')))
       next()
     })
     this.app.use(express.static(path.resolve(__dirname, '../public')))
-  }
-
-  private static rewriteImport(source) {
-    return source.replace(/(from\s+['"])(?![\.\/])/g, '$1/@modules/')
   }
 
   private handleSocketConnection() {
@@ -79,11 +59,22 @@ export class Server {
           user: [socket.id],
         })
       }
-      console.log(this.activeSockets)
       socket.on('disconnect', () => {
         this.activeSockets = this.activeSockets.filter(exist => exist !== socket.id)
         socket.broadcast.emit('remove-user', {
           socketId: socket.id,
+        })
+      })
+      socket.on('call-user', ({ offer, to }) => {
+        socket.to(to).emit('call-made', {
+          offer,
+          from: socket.id,
+        })
+      })
+      socket.on('make-answer', ({ answer, to }) => {
+        socket.to(to).emit('answer-made', {
+          answer,
+          from: socket.id,
         })
       })
     })
