@@ -94,7 +94,7 @@ const {stream, start} = VueUse.useUserMedia({
 })
 start()
 const localVideo = document.getElementById('local-video')
-Vue.watch(stream ,() => {
+Vue.watch(stream, () => {
   if (localVideo) localVideo.srcObject = stream.value
   stream.value.getTracks().forEach(track => peerConnection.addTrack(track, stream.value))
 })
